@@ -5,13 +5,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="jquery-timepicker/jquery.timepicker.css">
+    <link rel="stylesheet" href="main.css">
+
     <script src="jquery/dist/jquery.js"></script>
+    <script src="jquery-timepicker/jquery.timepicker.js"></script>
+
+
     <script src="main.js"></script>
 
-    <title>Document</title>
+
+
+    <title>Manager Page</title>
 </head>
 
 <body>
+
+    <section class="addAlarmSection">
+        <input type="text" class="timepicker" id="timepicker">
+        <button class="add_to_alarms_list" id="add_to_alarms_list">Add</button>
+    </section>
+
+    <section class="availableAlarmsSection">
+        <ul class="listOfAlarms" id="listOfAlarms">
+        </ul>
+    </section>
 
 </body>
 

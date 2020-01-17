@@ -1,0 +1,78 @@
+ul {
+    list-style: none;
+}
+
+
+/** ADD ALARM SECIOTN **/
+
+.addAlarmSection {
+    background: #d6d6d6;
+    padding: 10px;
+}
+
+.timepicker {
+    height: 50px;
+    text-align: center;
+    font-weight: 900;
+    font-size: 25px;
+    margin: auto;
+    width: 300px;
+    border: none;
+    margin-bottom: 5px;
+    border-radius: 10px;
+}
+
+.timepicker:focus {
+    border: none;
+    outline: #d6d6d6 solid 3px;
+}
+
+.addAlarmSection {
+    display: inline-grid;
+    width: -webkit-fill-available;
+    ;
+    margin: auto;
+    border-radius: 25px;
+}
+
+.add_to_alarms_list {
+    width: 300px;
+    margin: auto;
+    height: 25px;
+    border-radius: 10px;
+    border: none;
+    color: white;
+    background: darkgreen;
+}
+
+.add_to_alarms_list:focus {
+    outline: none;
+}
+
+
+/** EXISTS ALARM SECIOTN **/
+
+.singleAlarmLi {
+    padding: 10px;
+    display: inline-block;
+}
+
+.singleAlarmLi:hover {
+    box-shadow: #b5b5b5 1px 1px 5px 0px;
+    cursor: pointer;
+}
+
+.alarm_in {
+    width: 200px;
+    color: white;
+    background: #5a5a5a;
+    box-shadow: #b5b5b5 1px 1px 5px 0px;
+    text-align: center;
+}
+
+.options {
+    /* float: right; */
+    padding: 5px;
+    text-align: center;
+    border: black 1px solid;
+}
