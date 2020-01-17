@@ -37,13 +37,14 @@ app.get('/', (req, res) => {
  */
 app.post("/addNewTimer", (req, res) => {
     // clear player object
-    reset_obects();
     var passed_data = req.body;
     var alarm_data = passed_data.alarm_data;
-    var alarm_date = passed_data.alarm_date
-        // write new alarm data to file
+    var alarm_date = passed_data.alarm_date;
+    var alarm_name = passed_data.alarm_name;
+    // write new alarm data to file
     var exist_file_data = jsonfile.readFileSync(alarmsFilePath);
     exist_file_data.push({
+        alarm_name: encodeURI(alarm_name),
         alarm_in: alarm_data,
         alarm_date: alarm_date,
         active: 1,
@@ -56,6 +57,7 @@ app.post("/addNewTimer", (req, res) => {
         alarmRunning: is_running
     });
 });
+
 /**
  * 
  */
@@ -63,8 +65,9 @@ app.post("/removeAlarm", (req, res) => {
     // clear player object
     reset_obects();
     var passed_data = req.body;
+    var selected_index = passed_data.index;
     var selected_alarm = jsonfile.readFileSync(alarmsFilePath);
-    selected_alarm.splice(selected_alarm, 1);
+    selected_alarm.splice(selected_index, 1);
     jsonfile.writeFileSync(alarmsFilePath, selected_alarm);
     res.send({
         alarmRunning: is_running
@@ -89,7 +92,18 @@ app.post("/disableEnableAlarm", (req, res) => {
 
     res.send("");
 });
-
+/**
+ * 
+ */
+app.post("/addAlarmNote", (req, res) => {
+    var passed_data = req.body;
+    var index = passed_data.index;
+    var content = passed_data.content;
+    var selected_alarm = jsonfile.readFileSync(alarmsFilePath);
+    selected_alarm[index]["notes"] = content;
+    jsonfile.writeFileSync(alarmsFilePath, selected_alarm);
+    res.send("");
+})
 
 /**
  * 
@@ -106,9 +120,9 @@ app.listen(port, () => {
  * 
  */
 function startIntervalAlarms() {
+    console.log("running")
     clearTimeout(invertals.timer_check);
-    reset_obects()
-        //
+    //
     invertals.timer_check = setTimeout(startIntervalAlarms, 1000);
     //
     exist_file_data = jsonfile.readFileSync(alarmsFilePath);
@@ -149,6 +163,7 @@ function reset_obects() {
     player = null;
     runningAlarmIndex = null
     is_running = false;
+    startIntervalAlarms();
 }
 
 /**
