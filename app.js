@@ -25,9 +25,7 @@ var osType = process.platform;
 
 
 //CALL FUNCTIONS
-invertals["timer_check"] = setInterval(() => {
-    startIntervalAlarms();
-}, 1000);
+invertals.timer_check = setTimeout(startIntervalAlarms, 1000);
 /**
  * handel get main page requst
  */
@@ -63,7 +61,6 @@ app.post("/removeAlarm", (req, res) => {
     var passed_data = req.body;
     var selected_alarm = jsonfile.readFileSync(alarmsFilePath);
     selected_alarm[passed_data.index] = "";
-
     jsonfile.writeFileSync(alarmsFilePath, selected_alarm);
     res.send("")
 });
@@ -83,6 +80,10 @@ var is_running = false;
  * 
  */
 function startIntervalAlarms() {
+    clearTimeout(invertals.timer_check);
+    //
+    invertals.timer_check = setTimeout(startIntervalAlarms, 1000);
+    console.log("running ...");
     exist_file_data = jsonfile.readFileSync(alarmsFilePath);
     var h_now = new Date().getHours();
     var m_now = new Date().getMinutes();
@@ -94,25 +95,21 @@ function startIntervalAlarms() {
                 var h = new Date(dateObject.alarm_date).getHours();
                 var m = new Date(dateObject.alarm_date).getMinutes();
                 var s = new Date(dateObject.alarm_date).getSeconds();
-                if (!is_running) {
-                    if (h === h_now && m_now === m) {
-                        play_song();
-                        invertals["timer_check"] = setInterval(() => {
-                            startIntervalAlarms();
-                            console.log("Interval set to 60 secound..")
-                        }, 1000 * 60);
-                        is_running = true;
-                    } else {
-                        invertals["timer_check"] = setInterval(() => {
-                            startIntervalAlarms();
-                        }, 1000);
-                        is_running = false;
-                    }
+                // if there is an active alarm .. 
+                if (h === h_now && m_now === m) {
+                    play_song(); // play music 
+                    clearTimeout(invertals.timer_check);
+                    invertals.timer_check = setTimeout(startIntervalAlarms, 1000 * 60); // set the timer to 2 mins
+                } else {
+
                 }
             }
         });
     }
+
 }
+
+
 
 /**
  * 
