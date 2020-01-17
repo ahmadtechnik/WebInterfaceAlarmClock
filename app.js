@@ -100,8 +100,11 @@ function startIntervalAlarms() {
                     play_song(); // play music 
                     clearTimeout(invertals.timer_check);
                     invertals.timer_check = setTimeout(startIntervalAlarms, 1000 * 60); // set the timer to 2 mins
-                } else {
-
+                }
+                // clear player object
+                if (player !== null) {
+                    player.stop();
+                    player = null;
                 }
             }
         });
@@ -110,14 +113,13 @@ function startIntervalAlarms() {
 }
 
 
-
 /**
  * 
  * 
  */
 function play_song() {
     if (osType === "linux") {
-        player = Omx(mp3FilePath, "both", true);
+        player = Omx(mp3FilePath, "local", true);
     } else {
         console.log("Not able to start OMX on windows...");
     }
