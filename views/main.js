@@ -58,7 +58,27 @@ $(document).ready(() => {
         }
     });
 
+    /**
+     * on change active of the alarm
+     */
+    $(document).on("change", '.changeAlarmStatus', (event) => {
+        var current_e = $(event.target).closest("li");
+        var elemetn_index = current_e.attr("id");
+        var newValue = $(event.target).is(":checked") ? 1 : 0;
+        console.log(newValue)
+        $.ajax("disableEnableAlarm", {
+            type: "POST",
+            data: {
+                e_index: elemetn_index,
+                e_new_value: newValue
+            },
+            success: () => {
+
+            }
+        })
+    });
     update_exist_alarms_table();
+
 });
 
 
@@ -82,7 +102,7 @@ function update_exist_alarms_table() {
                 var c_1 = `<label>Active : <input type='checkbox' class='changeAlarmStatus' ${is_active} /></label>`
                 var c_2 = ``;
                 var e_1 = `<div class='alarm_in'>${alarms.alarm_in}</div>`;
-                var e_2 = `<div class='options'>${c_1 }<br>${c_2}</div>`;
+                var e_2 = `<div class='options'>${c_1}<br>${c_2}</div>`;
 
                 $(`#listOfAlarms`)
                     .append($(`<li class='singleAlarmLi' id='${i}' >`)
@@ -92,4 +112,4 @@ function update_exist_alarms_table() {
             }
         });
     });
-}
+};

@@ -3,13 +3,11 @@ const jsonfile = require("jsonfile");
 const path = require("path");
 const Omx = require("node-omxplayer");
 var bodyParser = require('body-parser');
-var multer = require('multer');
+
 
 const app = express();
 const port = 3000;
 var invertals = {};
-
-
 
 //
 app.use(express.static(__dirname + path.join("/", "views")));
@@ -22,10 +20,11 @@ var mp3FilePath = path.join(__dirname, "views", "assets", "mp3", "Jingle.mp3");
 var exist_file_data = null;
 var player = null;
 var osType = process.platform;
-
-
+var is_running = false;
+var running_requsted_period = 1000 * 60;
 //CALL FUNCTIONS
 invertals.timer_check = setTimeout(startIntervalAlarms, 1000);
+
 /**
  * handel get main page requst
  */
@@ -37,6 +36,8 @@ app.get('/', (req, res) => {
  * Handel request to add new alarm to list
  */
 app.post("/addNewTimer", (req, res) => {
+    // clear player object
+    reset_obects();
     var passed_data = req.body;
     var alarm_data = passed_data.alarm_data;
     var alarm_date = passed_data.alarm_date
@@ -59,18 +60,40 @@ app.post("/addNewTimer", (req, res) => {
  * 
  */
 app.post("/removeAlarm", (req, res) => {
+    // clear player object
+    reset_obects();
     var passed_data = req.body;
     var selected_alarm = jsonfile.readFileSync(alarmsFilePath);
-    selected_alarm[passed_data.index] = "";
+    selected_alarm.splice(selected_alarm, 1);
     jsonfile.writeFileSync(alarmsFilePath, selected_alarm);
     res.send({
         alarmRunning: is_running
     })
 });
+
 /**
  * 
  */
+app.post("/disableEnableAlarm", (req, res) => {
+    // clear player object
+    if (player !== null) {
+        player.quit();
+        player = null;
+    }
+    var passed_data = req.body;
+    var e_index = passed_data.e_index;
+    var newValue = passed_data.e_new_value;
+    var selected_alarm = jsonfile.readFileSync(alarmsFilePath);
+    selected_alarm[e_index]["active"] = parseInt(newValue);
+    jsonfile.writeFileSync(alarmsFilePath, selected_alarm);
 
+    res.send("");
+});
+
+
+/**
+ * 
+ */
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}!`)
 });
@@ -78,51 +101,65 @@ app.listen(port, () => {
 /**
  * backend prossec
  */
-var is_running = false;
+
 /**
  * 
  */
 function startIntervalAlarms() {
     clearTimeout(invertals.timer_check);
-    //
+    reset_obects()
+        //
     invertals.timer_check = setTimeout(startIntervalAlarms, 1000);
-
-    // clear player object
-    if (player !== null) {
-        player.quit();
-        player = null;
-    }
-
-    console.log("running ...");
+    //
     exist_file_data = jsonfile.readFileSync(alarmsFilePath);
+    //
     var h_now = new Date().getHours();
     var m_now = new Date().getMinutes();
     var s_now = new Date().getSeconds();
-
+    //
     if (exist_file_data.length > 0) {
-        exist_file_data.forEach(dateObject => {
+        exist_file_data.forEach((dateObject, i) => {
             if (typeof dateObject === "object") {
-                var h = new Date(dateObject.alarm_date).getHours();
-                var m = new Date(dateObject.alarm_date).getMinutes();
-                var s = new Date(dateObject.alarm_date).getSeconds();
-                // if there is an active alarm .. 
-                if (h === h_now && m_now === m) {
-                    play_song(); // play music 
-                    clearTimeout(invertals.timer_check);
-                    invertals.timer_check = setTimeout(startIntervalAlarms, 1000 * 60); // set the timer to 2 mins
+                if (dateObject["active"] === 1) {
+                    //
+                    var h = new Date(dateObject.alarm_date).getHours();
+                    var m = new Date(dateObject.alarm_date).getMinutes();
+                    var s = new Date(dateObject.alarm_date).getSeconds();
+                    // if there is an active alarm .. 
+                    if (h === h_now && m_now === m) {
+                        play_song(); // play music 
+                        clearTimeout(invertals.timer_check);
+                        invertals.timer_check = setTimeout(startIntervalAlarms, running_requsted_period); // set the timer to 2 mins
+                        runningAlarmIndex = i;
+                    }
                 }
             }
         });
     }
-
 }
 
+/**
+ * 
+ */
+function reset_obects() {
+    // clear player object
+    if (player !== null) {
+        player.quit();
+    }
+    player = null;
+    runningAlarmIndex = null
+    is_running = false;
+}
 
 /**
  * 
  * 
  */
 function play_song() {
+    if (player !== null) {
+        player = null;
+        player.quit();
+    }
     if (osType === "linux") {
         player = Omx(mp3FilePath, "local", true);
     } else {
