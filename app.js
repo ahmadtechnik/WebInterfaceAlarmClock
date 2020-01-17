@@ -51,7 +51,8 @@ app.post("/addNewTimer", (req, res) => {
     jsonfile.writeFileSync(alarmsFilePath, exist_file_data)
 
     res.send({
-        "data": alarm_data
+        "data": alarm_data,
+        alarmRunning: is_running
     });
 });
 /**
@@ -62,7 +63,9 @@ app.post("/removeAlarm", (req, res) => {
     var selected_alarm = jsonfile.readFileSync(alarmsFilePath);
     selected_alarm[passed_data.index] = "";
     jsonfile.writeFileSync(alarmsFilePath, selected_alarm);
-    res.send("")
+    res.send({
+        alarmRunning: is_running
+    })
 });
 /**
  * 
@@ -83,6 +86,13 @@ function startIntervalAlarms() {
     clearTimeout(invertals.timer_check);
     //
     invertals.timer_check = setTimeout(startIntervalAlarms, 1000);
+
+    // clear player object
+    if (player !== null) {
+        player.quit();
+        player = null;
+    }
+
     console.log("running ...");
     exist_file_data = jsonfile.readFileSync(alarmsFilePath);
     var h_now = new Date().getHours();
@@ -100,11 +110,6 @@ function startIntervalAlarms() {
                     play_song(); // play music 
                     clearTimeout(invertals.timer_check);
                     invertals.timer_check = setTimeout(startIntervalAlarms, 1000 * 60); // set the timer to 2 mins
-                }
-                // clear player object
-                if (player !== null) {
-                    player.stop();
-                    player = null;
                 }
             }
         });
