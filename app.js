@@ -156,6 +156,7 @@ function startIntervalAlarms() {
  * 
  */
 function reset_obects() {
+
     // clear player object
     if (player !== null) {
         player.quit();
@@ -164,6 +165,7 @@ function reset_obects() {
     runningAlarmIndex = null
     is_running = false;
     startIntervalAlarms();
+killPlayer();
 }
 
 /**
@@ -180,4 +182,20 @@ function play_song() {
     } else {
         console.log("Not able to start OMX on windows...");
     }
+}
+
+
+function killPlayer (){
+const { exec } = require('child_process');
+exec('killall omxplayer.bin', (err, stdout, stderr) => {
+  if (err) {
+    // node couldn't execute the command
+    return;
+  }
+
+  // the *entire* stdout and stderr (buffered)
+  console.log(`stdout: ${stdout}`);
+  console.log(`stderr: ${stderr}`);
+});
+
 }
