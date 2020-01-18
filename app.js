@@ -2,7 +2,10 @@ const express = require('express');
 const jsonfile = require("jsonfile");
 const path = require("path");
 const Omx = require("node-omxplayer");
-var bodyParser = require('body-parser');
+const bodyParser = require('body-parser');
+const fs = require("fs");
+
+
 
 
 const app = express();
@@ -15,8 +18,13 @@ app.use(express.static(__dirname + path.join("/", "node_modules")));
 app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({ extended: true }));
 // GLOBALS 
-var alarmsFilePath = path.join(__dirname, "views", "assets", "alarms.json");
-var mp3FilePath = path.join(__dirname, "views", "assets", "mp3", "Jingle.mp3");
+const alarmsFilePath = path.join(__dirname, "views", "assets", "alarms.json");
+const mp3DirPath = path.join(__dirname, "views", "assets", "mp3");
+const mp3FilePath = path.join(__dirname, "views", "assets", "mp3", "/");
+const settingsFilePath = path.join(__dirname, "views", "assets", "settings.json");
+
+
+
 var exist_file_data = null;
 var player = null;
 var osType = process.platform;
@@ -24,6 +32,12 @@ var is_running = false;
 var running_requsted_period = 1000 * 60;
 //CALL FUNCTIONS
 invertals.timer_check = setTimeout(startIntervalAlarms, 1000);
+
+/**
+ * 
+ */
+migration_files();
+
 
 /**
  * handel get main page requst
@@ -48,7 +62,8 @@ app.post("/addNewTimer", (req, res) => {
         alarm_in: alarm_data,
         alarm_date: alarm_date,
         active: 1,
-        repeats: []
+        repeats: [],
+        mp3_clip: 0
     });
     jsonfile.writeFileSync(alarmsFilePath, exist_file_data)
 
@@ -105,6 +120,30 @@ app.post("/addAlarmNote", (req, res) => {
     res.send("");
 })
 
+app.post("/getMp3ClipsList", (req, res) => {
+    res.send(get_all_mp3_sounds());
+})
+
+app.post("/changeAlarmMp3Clip", (req, res) => {
+    var passed_data = req.body;
+    var selected_clip_index = passed_data.selected_index;
+    var selected_alarm_index = passed_data.selected_alarm;
+
+    if (!parseInt(selected_clip_index) || !parseInt(selected_clip_index)) {
+        res.send("ERROR");
+    }
+
+    var alarmsDB = jsonfile.readFileSync(alarmsFilePath);
+    alarmsDB[selected_alarm_index].mp3_clip = parseInt(selected_clip_index);
+    jsonfile.writeFileSync(alarmsFilePath, alarmsDB);
+
+    play_song(selected_clip_index);
+
+    res.send({
+        clip_updated: true,
+
+    });
+});
 /**
  * 
  */
@@ -113,14 +152,9 @@ app.listen(port, () => {
 });
 
 /**
- * backend prossec
- */
-
-/**
  * 
  */
 function startIntervalAlarms() {
-    console.log("running")
     clearTimeout(invertals.timer_check);
     //
     invertals.timer_check = setTimeout(startIntervalAlarms, 1000);
@@ -141,7 +175,7 @@ function startIntervalAlarms() {
                     var s = new Date(dateObject.alarm_date).getSeconds();
                     // if there is an active alarm .. 
                     if (h === h_now && m_now === m) {
-                        play_song(); // play music 
+                        play_song(dateObject.mp3_clip); // play music 
                         clearTimeout(invertals.timer_check);
                         invertals.timer_check = setTimeout(startIntervalAlarms, running_requsted_period); // set the timer to 2 mins
                         runningAlarmIndex = i;
@@ -156,7 +190,6 @@ function startIntervalAlarms() {
  * 
  */
 function reset_obects() {
-
     // clear player object
     if (player !== null) {
         player.quit();
@@ -165,37 +198,78 @@ function reset_obects() {
     runningAlarmIndex = null
     is_running = false;
     startIntervalAlarms();
-killPlayer();
+
+    killPlayer();
 }
 
 /**
  * 
  * 
  */
-function play_song() {
-    if (player !== null) {
-        player = null;
-        player.quit();
+async function play_song(clip_index) {
+    if (typeof clip_index === "string") {
+        clip_index = parseInt(clip_index);
     }
-    if (osType === "linux") {
-        player = Omx(mp3FilePath, "local", true);
-    } else {
-        console.log("Not able to start OMX on windows...");
-    }
+    console.log(typeof clip_index);
+    const { exec } = require('child_process');
+    var file_to_play = mp3FilePath + get_all_mp3_sounds()[clip_index];
+    console.log(file_to_play)
+    killPlayer(() => {
+        switch (osType) {
+            case "linux":
+                player = Omx(file_to_play, "local", true);
+                break;
+            case "win32":
+                console.log("excuting ...")
+                exec('fmedia.exe ' + file_to_play + " && timeout 5 && taskkill /im fmedia.exe");
+                break;
+        }
+    });
 }
 
 
-function killPlayer (){
-const { exec } = require('child_process');
-exec('killall omxplayer.bin', (err, stdout, stderr) => {
-  if (err) {
-    // node couldn't execute the command
-    return;
-  }
+function killPlayer(callBack) {
+    const { exec } = require('child_process');
+    var order = "";
+    switch (osType) {
+        case "win32":
+            order = 'tasklist | find /i "fmedia.exe" && timeout 5 && taskkill /im fmedia.exe /F || echo process " fmedia.exe" not running.';
+            break;
+        case "linux":
+            order = "killall omxplayer.bin";
+            break;
+    }
+    exec(order);
+    if (typeof callBack === "function")
+        setTimeout(callBack, 100)
 
-  // the *entire* stdout and stderr (buffered)
-  console.log(`stdout: ${stdout}`);
-  console.log(`stderr: ${stderr}`);
-});
+}
 
+/**
+ * 
+ */
+function migration_files() {
+    // create alarms json file if not exist
+    fs.exists(alarmsFilePath, (exists) => {
+        if (!exists) {
+            fs.writeFileSync(alarmsFilePath, "[]");
+            console.log(alarmsFilePath + " file created")
+        }
+    });
+    // create settings json file if not exist
+    fs.exists(settingsFilePath, (exist) => {
+        if (!exist) {
+            fs.writeFileSync(settingsFilePath, JSON.stringify({
+                volume: 0,
+                alarm_active: 0,
+                mp3_clips: get_all_mp3_sounds()
+            }));
+        }
+    });
+}
+/**
+ * 
+ */
+function get_all_mp3_sounds() {
+    return fs.readdirSync(mp3DirPath);
 }
