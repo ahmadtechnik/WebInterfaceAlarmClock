@@ -7,7 +7,13 @@ $(document).ready(() => {
         type: "POST",
         success: (response) => {
             listOfMp3Clips = response;
-
+            var clipsList = "";
+            if (typeof listOfMp3Clips === "object") {
+                listOfMp3Clips.forEach((elem, index) => {
+                    clipsList += `<option value=${index} >${elem}</option>`;
+                })
+            }
+            $(`#select_alarm_clip_basic`).append(clipsList);
         }
     })
 
@@ -40,7 +46,8 @@ $(document).ready(() => {
                 data: {
                     alarm_data: s_hours.toString().padStart(2, 0) + ":" + s_mins.toString().padStart(2, 0) + ":" + s_sec.toString().padStart(2, 0),
                     alarm_date: time,
-                    alarm_name: alarm_name
+                    alarm_name: alarm_name,
+                    alarm_selected_clip: $(`#select_alarm_clip_basic`).val()
                 },
                 success: (response) => {
                     console.log(response)
@@ -59,7 +66,6 @@ $(document).ready(() => {
     $(document).on("click", '.removeAlarmBrn', (event) => {
         var current_e = $(event.target).closest(".singleAlarmLi");
         var elemetn_index = current_e.attr("id");
-
         $.ajax("removeAlarm", {
             type: "POST",
             data: {
@@ -125,6 +131,7 @@ $(document).ready(() => {
         })
 
     });
+
     update_exist_alarms_table();
 
 });
@@ -170,7 +177,7 @@ function update_exist_alarms_table() {
                     })
                 }
 
-                var s_1 = `<select id='select_alarm_clip'>${clipsList}</select>`;
+                var s_1 = `<select id='select_alarm_clip' class='select_clip_list'>${clipsList}</select>`;
                 var c_2 = `<button class='removeAlarmBrn'>X</button>`;
                 var a_1 = `<span class='alarm_name_text'>${alarm_name}</span>`;
                 var n_1 = `<textarea rows='5' class='alarm_notes'>${decodeURI(notes)}</textarea>`;

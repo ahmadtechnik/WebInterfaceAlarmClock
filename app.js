@@ -43,18 +43,23 @@ migration_files();
  * handel get main page requst
  */
 app.get('/', (req, res) => {
+
     res.sendFile("index.html");
+
 });
 
 /**
  * Handel request to add new alarm to list
  */
 app.post("/addNewTimer", (req, res) => {
+
     // clear player object
     var passed_data = req.body;
     var alarm_data = passed_data.alarm_data;
     var alarm_date = passed_data.alarm_date;
     var alarm_name = passed_data.alarm_name;
+    var alarm_clip = passed_data.alarm_selected_clip;
+
     // write new alarm data to file
     var exist_file_data = jsonfile.readFileSync(alarmsFilePath);
     exist_file_data.push({
@@ -63,7 +68,7 @@ app.post("/addNewTimer", (req, res) => {
         alarm_date: alarm_date,
         active: 1,
         repeats: [],
-        mp3_clip: 0
+        mp3_clip: parseInt(alarm_clip)
     });
     jsonfile.writeFileSync(alarmsFilePath, exist_file_data)
 
@@ -128,21 +133,13 @@ app.post("/changeAlarmMp3Clip", (req, res) => {
     var passed_data = req.body;
     var selected_clip_index = passed_data.selected_index;
     var selected_alarm_index = passed_data.selected_alarm;
-
-    if (!parseInt(selected_clip_index) || !parseInt(selected_clip_index)) {
-        res.send("ERROR");
-    }
-
     var alarmsDB = jsonfile.readFileSync(alarmsFilePath);
     alarmsDB[selected_alarm_index].mp3_clip = parseInt(selected_clip_index);
     jsonfile.writeFileSync(alarmsFilePath, alarmsDB);
 
     play_song(selected_clip_index);
 
-    res.send({
-        clip_updated: true,
-
-    });
+    res.send();
 });
 /**
  * 
@@ -206,29 +203,28 @@ function reset_obects() {
  * 
  * 
  */
-async function play_song(clip_index) {
+function play_song(clip_index) {
+    const { exec } = require('child_process');
+
+    killPlayer();
     if (typeof clip_index === "string") {
         clip_index = parseInt(clip_index);
     }
-    console.log(typeof clip_index);
-    const { exec } = require('child_process');
+
     var file_to_play = mp3FilePath + get_all_mp3_sounds()[clip_index];
-    console.log(file_to_play)
-    killPlayer(() => {
-        switch (osType) {
-            case "linux":
-                player = Omx(file_to_play, "local", true);
-                break;
-            case "win32":
-                console.log("excuting ...")
-                exec('fmedia.exe ' + file_to_play + " && timeout 5 && taskkill /im fmedia.exe");
-                break;
-        }
-    });
+    switch (osType) {
+        case "linux":
+            player = Omx(file_to_play, "local", true);
+            break;
+        case "win32":
+            exec('fmedia.exe ' + file_to_play + " && timeout 5 && taskkill /im fmedia.exe");
+            break;
+    };
+
 }
 
 
-function killPlayer(callBack) {
+function killPlayer() {
     const { exec } = require('child_process');
     var order = "";
     switch (osType) {
@@ -240,9 +236,7 @@ function killPlayer(callBack) {
             break;
     }
     exec(order);
-    if (typeof callBack === "function")
-        setTimeout(callBack, 100)
-
+    // change_settings_options({ alarm_active: 1 })
 }
 
 /**
@@ -272,4 +266,10 @@ function migration_files() {
  */
 function get_all_mp3_sounds() {
     return fs.readdirSync(mp3DirPath);
+}
+
+function change_settings_options(option) {
+    var exist_settings_file = jsonfile.readFileSync(settingsFilePath);
+    var newSettingsObject = {...exist_settings_file, ...option };
+    jsonfile.writeFileSync(settingsFilePath, newSettingsObject);
 }

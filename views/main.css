@@ -56,6 +56,15 @@ ul {
     outline: none;
 }
 
+.select_clip_list {
+    width: 200px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    height: 25px;
+    text-align: center;
+    margin-top: 10px;
+}
+
 
 /** EXISTS ALARM SECIOTN **/
 
