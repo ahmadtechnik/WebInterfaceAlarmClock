@@ -8,6 +8,7 @@ const fs = require("fs");
 
 
 
+//
 const app = express();
 const port = 3000;
 var invertals = {};
@@ -23,8 +24,8 @@ const mp3DirPath = path.join(__dirname, "views", "assets", "mp3");
 const mp3FilePath = path.join(__dirname, "views", "assets", "mp3", "/");
 const settingsFilePath = path.join(__dirname, "views", "assets", "settings.json");
 
-
-
+//
+//
 var exist_file_data = null;
 var player = null;
 var osType = process.platform;
@@ -43,9 +44,7 @@ migration_files();
  * handel get main page requst
  */
 app.get('/', (req, res) => {
-
     res.sendFile("index.html");
-
 });
 
 /**
@@ -200,10 +199,11 @@ function reset_obects() {
 }
 
 /**
- * 
+ * //
  * 
  */
 function play_song(clip_index) {
+
     const { exec } = require('child_process');
 
     killPlayer();
@@ -220,10 +220,19 @@ function play_song(clip_index) {
             exec('fmedia.exe ' + file_to_play + " && timeout 5 && taskkill /im fmedia.exe");
             break;
     };
-
+    activeSnoozeBtn(alarmInfos);
 }
 
+function activeSnoozeBtn(alarmInfos) {
+    // add to sittings some data to create snooze btn
+    var settingsFile = jsonfile.readFileSync(settingsFilePath);
+    settingsFile["alarm_active"] = alarmInfos;
+    console.log(settingsFile);
+}
 
+/**
+ * //
+ */
 function killPlayer() {
     const { exec } = require('child_process');
     var order = "";
