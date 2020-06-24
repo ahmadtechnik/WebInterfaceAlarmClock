@@ -109,3 +109,4 @@ dist
 alarms.json
 settings.json
 
+*.mp3

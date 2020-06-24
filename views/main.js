@@ -1,6 +1,10 @@
 var timePicker = null;
 var time = null;
 var listOfMp3Clips = null;
+var intervals = {};
+
+
+
 $(document).ready(() => {
 
     $.ajax("getMp3ClipsList", {
@@ -132,7 +136,37 @@ $(document).ready(() => {
 
     });
 
+    $(document).on("click", '#stop_btn', () => {
+        clearInterval(intervals.checkAlarmStatus);
+        is_running = false;
+        intervals.checkAlarmStatus = setInterval(checkIfPlayerIsRunning, 1000);
+        $.ajax("disableEnableAlarm", {
+            type: "POST",
+            data: {
+                onlyKill: true
+            },
+            success: (response) => {
+                console.log(response)
+            }
+        })
+    })
+    $(document).on("click", '#snooze_btn', () => {
+        clearInterval(intervals.checkAlarmStatus);
+        is_running = false;
+        intervals.checkAlarmStatus = setInterval(checkIfPlayerIsRunning, 1000);
+        $.ajax("snoozeTimer", {
+            type: "POST",
+            data: {
+                selected_period: parseInt($(`#snooze_time_field_input`).val())
+            },
+            success: (response) => {
+                console.log(response)
+            }
+        })
+    })
+
     update_exist_alarms_table();
+    intervals.checkAlarmStatus = setInterval(checkIfPlayerIsRunning, 1000);
 
 });
 
@@ -193,3 +227,32 @@ function update_exist_alarms_table() {
         });
     });
 };
+
+/**
+ * 
+ */
+var is_running = false;
+
+function checkIfPlayerIsRunning() {
+    clearInterval(intervals.checkAlarmStatus);
+    $.ajax("/isAlarmRunning", {
+        type: "post",
+        data: {},
+        success: (response) => {
+            is_running = response;
+        }
+    });
+
+    var snoozeBtnContainer = $(`#snoozeSection`);
+    const stop_alarm_btn = $(`<button class="stop_btn" id='stop_btn'>Stope</button>`);
+    const snooze_alarm_btn = $(`<button class="snooze_btn" id='snooze_btn'>Snooze</button>`);
+    const snooze_timer_field = $(`<input type='number' value='20' class='snooze_time_field_input' id='snooze_time_field_input' />`);
+    if (is_running) {
+        snoozeBtnContainer.html($(`<div class='btns_container' id='btns_container'>`)
+            .append([stop_alarm_btn, snooze_alarm_btn, snooze_timer_field]));
+        intervals.checkAlarmStatus = setInterval(checkIfPlayerIsRunning, 1000 * 60);
+    } else {
+        snoozeBtnContainer.html("");
+        intervals.checkAlarmStatus = setInterval(checkIfPlayerIsRunning, 1000);
+    }
+}

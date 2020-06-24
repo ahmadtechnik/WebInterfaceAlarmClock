@@ -6,14 +6,13 @@ const bodyParser = require('body-parser');
 const fs = require("fs");
 
 
-
-
 //
 const app = express();
-const port = 3000;
+const port = 3001;
 var invertals = {};
-
-//
+var server = require('http').Server(app);
+const io = require("socket.io")(server);
+// USE for express 
 app.use(express.static(__dirname + path.join("/", "views")));
 app.use(express.static(__dirname + path.join("/", "node_modules")));
 app.use(bodyParser.json()); // for parsing application/json
@@ -45,6 +44,15 @@ migration_files();
  */
 app.get('/', (req, res) => {
     res.sendFile("index.html");
+});
+
+/**
+ * #### SOCKET IO
+ */
+
+io.on("connection", (socket) => {
+
+    console.log("connected ...")
 });
 
 /**
@@ -82,7 +90,7 @@ app.post("/addNewTimer", (req, res) => {
  */
 app.post("/removeAlarm", (req, res) => {
     // clear player object
-    reset_obects();
+    killPlayer();
     var passed_data = req.body;
     var selected_index = passed_data.index;
     var selected_alarm = jsonfile.readFileSync(alarmsFilePath);
@@ -97,18 +105,15 @@ app.post("/removeAlarm", (req, res) => {
  * 
  */
 app.post("/disableEnableAlarm", (req, res) => {
-    // clear player object
-    if (player !== null) {
-        player.quit();
-        player = null;
-    }
+    killPlayer();
     var passed_data = req.body;
-    var e_index = passed_data.e_index;
-    var newValue = passed_data.e_new_value;
-    var selected_alarm = jsonfile.readFileSync(alarmsFilePath);
-    selected_alarm[e_index]["active"] = parseInt(newValue);
-    jsonfile.writeFileSync(alarmsFilePath, selected_alarm);
-
+    if (!passed_data.onlyKill) {
+        var e_index = passed_data.e_index;
+        var newValue = passed_data.e_new_value;
+        var selected_alarm = jsonfile.readFileSync(alarmsFilePath);
+        selected_alarm[e_index]["active"] = parseInt(newValue);
+        jsonfile.writeFileSync(alarmsFilePath, selected_alarm);
+    }
     res.send("");
 });
 /**
@@ -140,6 +145,22 @@ app.post("/changeAlarmMp3Clip", (req, res) => {
 
     res.send();
 });
+
+app.post("/isAlarmRunning", (req, res) => {
+    isRunning('fmedia.exe', 'omxplayer', 'omxplayer').then((v) => {
+        res.send(v);
+    });
+});
+
+app.post("/snoozeTimer", (req, res) => {
+    killPlayer();
+    var passed_data = req.body;
+    invertals.snoze_timer = setTimeout(() => {
+        play_song(0);
+    }, passed_data.selected_period * 60 * 1000);
+    res.send("_" + passed_data.selected_period * 60 * 1000)
+});
+
 /**
  * 
  */
@@ -171,8 +192,8 @@ function startIntervalAlarms() {
                     var s = new Date(dateObject.alarm_date).getSeconds();
                     // if there is an active alarm .. 
                     if (h === h_now && m_now === m) {
-                        play_song(dateObject.mp3_clip); // play music 
                         clearTimeout(invertals.timer_check);
+                        play_song(dateObject.mp3_clip); // play music 
                         invertals.timer_check = setTimeout(startIntervalAlarms, running_requsted_period); // set the timer to 2 mins
                         runningAlarmIndex = i;
                     }
@@ -182,51 +203,36 @@ function startIntervalAlarms() {
     }
 }
 
-/**
- * 
- */
-function reset_obects() {
-    // clear player object
-    if (player !== null) {
-        player.quit();
-    }
-    player = null;
-    runningAlarmIndex = null
-    is_running = false;
-    startIntervalAlarms();
 
-    killPlayer();
-}
 
 /**
  * //
  * 
  */
 function play_song(clip_index) {
-
-    const { exec } = require('child_process');
-
     killPlayer();
+    const { exec } = require('child_process');
     if (typeof clip_index === "string") {
         clip_index = parseInt(clip_index);
     }
-
     var file_to_play = mp3FilePath + get_all_mp3_sounds()[clip_index];
+    console.log(file_to_play)
     switch (osType) {
         case "linux":
-            player = Omx(file_to_play, "local", true);
+            player = Omx(file_to_play, "local", true, 1);
             break;
         case "win32":
             exec('fmedia.exe ' + file_to_play + " && timeout 5 && taskkill /im fmedia.exe");
             break;
     };
-    activeSnoozeBtn(alarmInfos);
 }
-
-function activeSnoozeBtn(alarmInfos) {
+/**
+ * 
+ */
+function activeSnoozeBtn() {
     // add to sittings some data to create snooze btn
     var settingsFile = jsonfile.readFileSync(settingsFilePath);
-    settingsFile["alarm_active"] = alarmInfos;
+    // settingsFile["alarm_active"] = alarmInfos;
     console.log(settingsFile);
 }
 
@@ -234,18 +240,26 @@ function activeSnoozeBtn(alarmInfos) {
  * //
  */
 function killPlayer() {
-    const { exec } = require('child_process');
-    var order = "";
-    switch (osType) {
-        case "win32":
-            order = 'tasklist | find /i "fmedia.exe" && timeout 5 && taskkill /im fmedia.exe /F || echo process " fmedia.exe" not running.';
-            break;
-        case "linux":
-            order = "killall omxplayer.bin";
-            break;
-    }
-    exec(order);
-    // change_settings_options({ alarm_active: 1 })
+    isRunning('fmedia.exe', 'omxplayer', 'omxplayer').then((v) => {
+        console.log("Service is Running : " + v);
+        if (v) {
+            // change_settings_options({ alarm_active: 1 })
+            console.log("prosess is running ... and killed now");
+            const { exec } = require('child_process');
+            var order = "";
+            switch (osType) {
+                case "win32":
+                    order = 'tasklist | find /i "fmedia.exe" && timeout 5 && taskkill /im fmedia.exe /F || echo process " fmedia.exe" not running.';
+                    break;
+                case "linux":
+                    order = "killall omxplayer.bin";
+                    break;
+            }
+            exec(order);
+
+        }
+    })
+
 }
 
 /**
@@ -281,4 +295,22 @@ function change_settings_options(option) {
     var exist_settings_file = jsonfile.readFileSync(settingsFilePath);
     var newSettingsObject = {...exist_settings_file, ...option };
     jsonfile.writeFileSync(settingsFilePath, newSettingsObject);
+}
+
+
+
+
+function isRunning(win, mac, linux) {
+    const exec = require('child_process').exec
+    return new Promise(function(resolve, reject) {
+        const plat = process.platform
+        const cmd = plat == 'win32' ? 'tasklist' : (plat == 'darwin' ? 'ps -ax | grep ' + mac : (plat == 'linux' ? 'ps -A' : ''))
+        const proc = plat == 'win32' ? win : (plat == 'darwin' ? mac : (plat == 'linux' ? linux : ''))
+        if (cmd === '' || proc === '') {
+            resolve(false)
+        }
+        exec(cmd, function(err, stdout, stderr) {
+            resolve(stdout.toLowerCase().indexOf(proc.toLowerCase()) > -1)
+        })
+    })
 }

@@ -3,6 +3,15 @@ ul {
 }
 
 
+/** BODY **/
+
+body {
+    margin: 0px;
+    padding: 0px;
+    padding-top: 10px;
+}
+
+
 /** ADD ALARM SECIOTN **/
 
 .addAlarmSection {
@@ -139,6 +148,47 @@ ul {
 .alarm_notes {
     width: -webkit-fill-available;
     margin-bottom: 5px;
+}
+
+
+/** SNOOZE SECTION **/
+
+.snoozeSection {
+    width: 100%;
+    padding: 10px;
+    position: fixed;
+    bottom: 0px;
+    display: flex;
+}
+
+.stop_btn {
+    height: 50px;
+    width: 100px;
+    color: white;
+    background: red;
+    border: none;
+}
+
+.snooze_btn {
+    height: 50px;
+    width: 100px;
+    color: white;
+    background: orange;
+    border: none;
+}
+
+.btns_container {
+    margin: auto;
+    display: inline;
+    padding: 10px;
+}
+
+.snooze_time_field_input {
+    position: relative;
+    top: -36px;
+    left: -201px;
+    width: 197px;
+    text-align: center;
 }
 
 
