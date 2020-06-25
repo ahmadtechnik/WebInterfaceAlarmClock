@@ -171,11 +171,11 @@ app.post("/snoozeTimer", (req, res) => {
 /** REQUESTS  FROM AI DEVICE  */
 //
 app.get("/stopAllAlarms", (req, res) => {
+    removeAutomaticlyAddedAlarms();
     console.log("Player will be killed ....");
     killPlayer();
     var exist_file_data = jsonfile.readFileSync(alarmsFilePath);
     exist_file_data = exist_file_data.map((singleAlarm, i) => {
-
         if (singleAlarm.active) {
             singleAlarm.active = 0;
         }
@@ -187,6 +187,7 @@ app.get("/stopAllAlarms", (req, res) => {
 });
 //
 app.get("/add8HoursAlarm", (req, res) => {
+    removeAutomaticlyAddedAlarms();
     var exist_file_data = jsonfile.readFileSync(alarmsFilePath);
     const eghtHoutsMill = 60 * 60 * 1 * 1000;
     let date_now = new Date().getTime()
