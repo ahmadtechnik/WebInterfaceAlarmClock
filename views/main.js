@@ -5,7 +5,10 @@ var intervals = {};
 
 
 
+
+
 $(document).ready(() => {
+
 
     $.ajax("getMp3ClipsList", {
         type: "POST",
@@ -103,22 +106,22 @@ $(document).ready(() => {
      * 
      */
     $(document).on("focusout", `.alarm_notes`, (event) => {
-            var current_e = $(event.target).closest(".singleAlarmLi");
-            var elemetn_index = current_e.attr("id");
-            $.ajax("addAlarmNote", {
-                type: "post",
-                data: {
-                    index: elemetn_index,
-                    content: encodeURI($(event.target).val())
-                },
-                success: () => {
+        var current_e = $(event.target).closest(".singleAlarmLi");
+        var elemetn_index = current_e.attr("id");
+        $.ajax("addAlarmNote", {
+            type: "post",
+            data: {
+                index: elemetn_index,
+                content: encodeURI($(event.target).val())
+            },
+            success: () => {
 
-                }
-            })
+            }
         })
-        /**
-         * 
-         */
+    })
+    /**
+     * 
+     */
     $(document).on("change", `#select_alarm_clip`, (event) => {
         var selected_clip_index = $(event.target).val();
         var current_e = $(event.target).closest(".singleAlarmLi");

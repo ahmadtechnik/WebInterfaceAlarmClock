@@ -1,42 +1,41 @@
+<!-- @format -->
+
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
 
-<head>
-    <meta charset="UTF-8">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="stylesheet" href="jquery-timepicker/jquery.timepicker.css">
-    <link rel="stylesheet" href="main.css">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link rel="stylesheet" href="jquery-timepicker/jquery.timepicker.css" />
+    <link rel="stylesheet" href="main.css" />
 
     <script src="socket.io-client/dist/socket.io.js"></script>
     <script src="jquery/dist/jquery.js"></script>
     <script src="jquery-timepicker/jquery.timepicker.js"></script>
+
     <script src="main.js"></script>
 
-
-
     <title>Manager Page</title>
-</head>
+  </head>
 
-<body>
-
+  <body>
     <section class="addAlarmSection">
-        <input type="text" class="timepicker" id="timepicker">
-        <input type="text" placeholder="Alarm Name" class="alarm_name" id="alarm_name" />
-        <select id="select_alarm_clip_basic" class="select_clip_list"></select>
-        <button class="add_to_alarms_list" id="add_to_alarms_list">Add</button>
+      <input type="text" class="timepicker" id="timepicker" />
+      <input
+        type="text"
+        placeholder="Alarm Name"
+        class="alarm_name"
+        id="alarm_name"
+      />
+      <select id="select_alarm_clip_basic" class="select_clip_list"></select>
+      <button class="add_to_alarms_list" id="add_to_alarms_list">Add</button>
     </section>
 
     <section class="availableAlarmsSection">
-        <div class="listOfAlarms" id="listOfAlarms">
-        </div>
+      <div class="listOfAlarms" id="listOfAlarms"></div>
     </section>
 
-    <section class="snoozeSection" id="snoozeSection">
-
-    </section>
-</body>
-
+    <section class="snoozeSection" id="snoozeSection"></section>
+  </body>
 </html>

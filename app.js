@@ -8,10 +8,16 @@ const fs = require("fs");
 
 //
 const app = express();
-const port = 3001;
+const port = 3000;
 var invertals = {};
-var server = require('http').Server(app);
-const io = require("socket.io")(server);
+
+const http = require("http").createServer(app);
+const io = require("socket.io")(http);
+const net = require("net");
+
+
+
+
 // USE for express 
 app.use(express.static(__dirname + path.join("/", "views")));
 app.use(express.static(__dirname + path.join("/", "node_modules")));
@@ -23,7 +29,7 @@ const mp3DirPath = path.join(__dirname, "views", "assets", "mp3");
 const mp3FilePath = path.join(__dirname, "views", "assets", "mp3", "/");
 const settingsFilePath = path.join(__dirname, "views", "assets", "settings.json");
 
-//
+
 //
 var exist_file_data = null;
 var player = null;
@@ -50,10 +56,7 @@ app.get('/', (req, res) => {
  * #### SOCKET IO
  */
 
-io.on("connection", (socket) => {
 
-    console.log("connected ...")
-});
 
 /**
  * Handel request to add new alarm to list
@@ -105,6 +108,7 @@ app.post("/removeAlarm", (req, res) => {
  * 
  */
 app.post("/disableEnableAlarm", (req, res) => {
+    console.log("Requsted disableEnableAlarm")
     killPlayer();
     var passed_data = req.body;
     if (!passed_data.onlyKill) {
@@ -161,14 +165,75 @@ app.post("/snoozeTimer", (req, res) => {
     res.send("_" + passed_data.selected_period * 60 * 1000)
 });
 
+
+
+
+/** REQUESTS  FROM AI DEVICE  */
+//
+app.get("/stopAllAlarms", (req, res) => {
+    console.log("Player will be killed ....");
+    killPlayer();
+    var exist_file_data = jsonfile.readFileSync(alarmsFilePath);
+    exist_file_data = exist_file_data.map((singleAlarm, i) => {
+
+        if (singleAlarm.active) {
+            singleAlarm.active = 0;
+        }
+        return singleAlarm;
+    });
+    jsonfile.writeFileSync(alarmsFilePath, exist_file_data);
+    console.log("ALL ALARMS DIABLED ...")
+    res.send("DONE.");
+});
+//
+app.get("/add8HoursAlarm", (req, res) => {
+    var exist_file_data = jsonfile.readFileSync(alarmsFilePath);
+    const eghtHoutsMill = 60 * 60 * 1 * 1000;
+    let date_now = new Date().getTime()
+    let date_after_8_hours = date_now + eghtHoutsMill;
+    console.log(new Date(date_after_8_hours).toString())
+    exist_file_data.push({
+        alarm_name: '#AUTOMETED#',
+        alarm_in: '11:00:00',
+        alarm_date: new Date(date_after_8_hours).toString(),
+        active: 1,
+        repeats: [],
+        mp3_clip: 20,
+        notes: '#BOT#'
+    });
+    jsonfile.writeFileSync(alarmsFilePath, exist_file_data);
+    res.send("DONE..");
+});
+//
+app.get("/removeAutomaticlyAddedAlarms", (req, res) => {
+    removeAutomaticlyAddedAlarms();
+    res.send("DONE...");
+});
+
+let removeAutomaticlyAddedAlarms = () => {
+    var exist_file_data = jsonfile.readFileSync(alarmsFilePath);
+    exist_file_data = exist_file_data.filter((singleAlarm) => {
+        if (singleAlarm.alarm_name != "#AUTOMETED#") {
+            return singleAlarm;
+        }
+    });
+    jsonfile.writeFileSync(alarmsFilePath, exist_file_data);
+}
+
+
+
+/********* END REQUESTS FROM AI DEVICE ********** */
+
+
 /**
  * 
  */
-app.listen(port, () => {
-    console.log(`Example app listening on port ${port}!`)
+app.listen(port, "0.0.0.0", () => {
+    console.log(`Example app listening on port ${port} !`)
 });
 
 /**
+ * 
  * 
  */
 function startIntervalAlarms() {
@@ -202,8 +267,6 @@ function startIntervalAlarms() {
         });
     }
 }
-
-
 
 /**
  * //
@@ -256,12 +319,10 @@ function killPlayer() {
                     break;
             }
             exec(order);
-
         }
     })
 
 }
-
 /**
  * 
  */
@@ -291,26 +352,84 @@ function get_all_mp3_sounds() {
     return fs.readdirSync(mp3DirPath);
 }
 
+
 function change_settings_options(option) {
     var exist_settings_file = jsonfile.readFileSync(settingsFilePath);
-    var newSettingsObject = {...exist_settings_file, ...option };
+    var newSettingsObject = { ...exist_settings_file, ...option };
     jsonfile.writeFileSync(settingsFilePath, newSettingsObject);
 }
 
 
-
-
 function isRunning(win, mac, linux) {
     const exec = require('child_process').exec
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
         const plat = process.platform
         const cmd = plat == 'win32' ? 'tasklist' : (plat == 'darwin' ? 'ps -ax | grep ' + mac : (plat == 'linux' ? 'ps -A' : ''))
         const proc = plat == 'win32' ? win : (plat == 'darwin' ? mac : (plat == 'linux' ? linux : ''))
         if (cmd === '' || proc === '') {
             resolve(false)
         }
-        exec(cmd, function(err, stdout, stderr) {
+        exec(cmd, function (err, stdout, stderr) {
             resolve(stdout.toLowerCase().indexOf(proc.toLowerCase()) > -1)
         })
     })
 }
+
+
+/********************  HANDEL CONNECTION TO AI ***********************/
+// connectToAIdevice();
+let lastValue = 0;
+let lastValueCounter = 0;
+var timer = 100;
+function connectToAIdevice() {
+    const ip = "192.168.178.49";
+    const portServer = 82;
+
+    const request = http.request({
+        port: portServer,
+        host: ip,
+        method: 'GET',
+        path: '/g_d_s',
+        timeout: 1000
+    }, (res) => {
+        //another chunk of data has been received, so append it to `str`
+        res.on('data', function (chunk) {
+
+            if (lastValue != parseFloat(chunk)) {
+
+                console.log(parseFloat(chunk), lastValueCounter);
+                if (lastValueCounter >= 5) {
+                    console.log("hang up on value : ", lastValue);
+                    lastValueCounter = 0;
+                }
+
+                lastValueCounter++;
+            }
+            timer = 100;
+            lastValue = parseFloat(chunk);
+        });
+
+        //the whole response has been received, so we just print it out here
+        res.on('end', function () { });
+        res.on("error", (err) => { });
+    });
+
+    request.on("error", (err) => {
+        console.log("error connectung ...", err)
+        timer = 5000;
+        request.destroy();
+    });
+    request.on("timeout", () => {
+        console.log("timeout...");
+        timer = 5000;
+        request.destroy();
+    });
+
+
+    request.write("")
+    request.end();
+
+    setTimeout(connectToAIdevice, timer);
+}
+
+
