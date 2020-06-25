@@ -185,7 +185,7 @@ app.post("/add8HoursAlarm", (req, res) => {
     removeAutomaticlyAddedAlarms();
     var exist_file_data = jsonfile.readFileSync(alarmsFilePath);
     const eghtHoutsMill = 60 * 60 * 8 * 1000;
-    const eghtHoutsMill_ = 120000;
+    const eghtHoutsMill_ = 120000;//
     let date_now = new Date().getTime()
     let date_after_8_hours = date_now + eghtHoutsMill;
     console.log(new Date(date_after_8_hours).toString())
