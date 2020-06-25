@@ -190,17 +190,18 @@ app.post("/add8HoursAlarm", (req, res) => {
     removeAutomaticlyAddedAlarms();
     var exist_file_data = jsonfile.readFileSync(alarmsFilePath);
     const eghtHoutsMill = 60 * 60 * 1 * 1000;
+    const eghtHoutsMill_ = 120000;
     let date_now = new Date().getTime()
-    let date_after_8_hours = date_now + eghtHoutsMill;
+    let date_after_8_hours = date_now + eghtHoutsMill_;
     console.log(new Date(date_after_8_hours).toString())
     exist_file_data.push({
         alarm_name: '#AUTOMETED#',
-        alarm_in: '11:00:00',
+        alarm_in: 'AUTO',
         alarm_date: new Date(date_after_8_hours).toString(),
         active: 1,
         repeats: [],
         mp3_clip: 20,
-        notes: '#BOT#'
+        notes: new Date(date_after_8_hours).toString()
     });
     jsonfile.writeFileSync(alarmsFilePath, exist_file_data);
     res.send("DONE..");
