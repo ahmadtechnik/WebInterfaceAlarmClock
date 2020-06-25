@@ -39,24 +39,21 @@ var running_requsted_period = 1000 * 60;
 //CALL FUNCTIONS
 invertals.timer_check = setTimeout(startIntervalAlarms, 1000);
 
+
+
+/**
+ * 
+ */
+http.listen(port, "0.0.0.0", () => {
+    console.log(`Example app listening on port ${port} !`)
+});
+
+
+
 /**
  * 
  */
 migration_files();
-
-
-/**
- * handel get main page requst
- */
-app.get('/', (req, res) => {
-    res.sendFile("index.html");
-});
-
-/**
- * #### SOCKET IO
- */
-
-
 
 /**
  * Handel request to add new alarm to list
@@ -118,7 +115,7 @@ app.post("/disableEnableAlarm", (req, res) => {
         selected_alarm[e_index]["active"] = parseInt(newValue);
         jsonfile.writeFileSync(alarmsFilePath, selected_alarm);
     }
-    res.send("");
+    res.send("Hello From Server");
 });
 /**
  * 
@@ -170,7 +167,10 @@ app.post("/snoozeTimer", (req, res) => {
 
 /** REQUESTS  FROM AI DEVICE  */
 //
-app.get("/stopAllAlarms", (req, res) => {
+app.post("/stopAllAlarms", (req, res) => {
+    var passed_data = req.body;
+    console.log(passed_data)
+    console.log("will stop all alarms...")
     removeAutomaticlyAddedAlarms();
     console.log("Player will be killed ....");
     killPlayer();
@@ -186,7 +186,7 @@ app.get("/stopAllAlarms", (req, res) => {
     res.send("DONE.");
 });
 //
-app.get("/add8HoursAlarm", (req, res) => {
+app.post("/add8HoursAlarm", (req, res) => {
     removeAutomaticlyAddedAlarms();
     var exist_file_data = jsonfile.readFileSync(alarmsFilePath);
     const eghtHoutsMill = 60 * 60 * 1 * 1000;
@@ -206,7 +206,7 @@ app.get("/add8HoursAlarm", (req, res) => {
     res.send("DONE..");
 });
 //
-app.get("/removeAutomaticlyAddedAlarms", (req, res) => {
+app.post("/removeAutomaticlyAddedAlarms", (req, res) => {
     removeAutomaticlyAddedAlarms();
     res.send("DONE...");
 });
@@ -225,13 +225,6 @@ let removeAutomaticlyAddedAlarms = () => {
 
 /********* END REQUESTS FROM AI DEVICE ********** */
 
-
-/**
- * 
- */
-app.listen(port, "0.0.0.0", () => {
-    console.log(`Example app listening on port ${port} !`)
-});
 
 /**
  * 
