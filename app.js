@@ -8,14 +8,12 @@ const fs = require("fs");
 
 //
 const app = express();
-const port = 80;
+const port = 3000;
 var invertals = {};
 
 const http = require("http").createServer(app);
 const io = require("socket.io")(http);
 const net = require("net");
-
-
 
 
 // USE for express 
@@ -168,8 +166,6 @@ app.post("/snoozeTimer", (req, res) => {
 /** REQUESTS  FROM AI DEVICE  */
 //
 app.post("/stopAllAlarms", (req, res) => {
-    var passed_data = req.body;
-    console.log(passed_data)
     console.log("will stop all alarms...")
     removeAutomaticlyAddedAlarms();
     console.log("Player will be killed ....");
@@ -182,17 +178,16 @@ app.post("/stopAllAlarms", (req, res) => {
         return singleAlarm;
     });
     jsonfile.writeFileSync(alarmsFilePath, exist_file_data);
-    console.log("ALL ALARMS DIABLED ...")
     res.send("DONE.");
 });
 //
 app.post("/add8HoursAlarm", (req, res) => {
     removeAutomaticlyAddedAlarms();
     var exist_file_data = jsonfile.readFileSync(alarmsFilePath);
-    const eghtHoutsMill = 60 * 60 * 1 * 1000;
+    const eghtHoutsMill = 60 * 60 * 8 * 1000;
     const eghtHoutsMill_ = 120000;
     let date_now = new Date().getTime()
-    let date_after_8_hours = date_now + eghtHoutsMill_;
+    let date_after_8_hours = date_now + eghtHoutsMill;
     console.log(new Date(date_after_8_hours).toString())
     exist_file_data.push({
         alarm_name: '#AUTOMETED#',
