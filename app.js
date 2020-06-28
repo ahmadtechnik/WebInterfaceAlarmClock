@@ -161,7 +161,6 @@ app.post("/snoozeTimer", (req, res) => {
 
 
 
-
 /** REQUESTS  FROM AI DEVICE  */
 //
 app.post("/stopAllAlarms", (req, res) => {
@@ -213,13 +212,9 @@ let removeAutomaticlyAddedAlarms = (cb) => {
             return singleAlarm;
         }
     });
-    jsonfile.writeFile(alarmsFilePath, exist_file_data).then(() => {
-        if (typeof cb == "function") cb("DONE");
-    }).catch((err) => {
-        if (typeof cb == "function") cb("ERR");
-    });
-
+    jsonfile.writeFileSync(alarmsFilePath, exist_file_data);
 }
+
 
 
 
