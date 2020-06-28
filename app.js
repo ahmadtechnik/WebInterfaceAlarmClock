@@ -9,6 +9,7 @@ const fs = require("fs");
 //
 const app = express();
 const port = 80;
+const AIport = 81;
 var invertals = {};
 
 const http = require("http").createServer(app);
@@ -38,14 +39,12 @@ var running_requsted_period = 1000 * 60;
 invertals.timer_check = setTimeout(startIntervalAlarms, 1000);
 
 
-
 /**
  * 
  */
 http.listen(port, "0.0.0.0", () => {
     console.log(`Example app listening on port ${port} !`)
 });
-
 
 
 /**
@@ -178,7 +177,7 @@ app.post("/stopAllAlarms", (req, res) => {
         return singleAlarm;
     });
     jsonfile.writeFileSync(alarmsFilePath, exist_file_data);
-    res.send("DONE.");
+    res.send("DONE");
 });
 //
 app.post("/add8HoursAlarm", (req, res) => {
@@ -195,26 +194,31 @@ app.post("/add8HoursAlarm", (req, res) => {
         alarm_date: new Date(date_after_8_hours).toString(),
         active: 1,
         repeats: [],
-        mp3_clip: 20,
+        mp3_clip: 15,
         notes: new Date(date_after_8_hours).toString()
     });
     jsonfile.writeFileSync(alarmsFilePath, exist_file_data);
-    res.send("DONE..");
+    res.send("DONE");
 });
 //
 app.post("/removeAutomaticlyAddedAlarms", (req, res) => {
     removeAutomaticlyAddedAlarms();
-    res.send("DONE...");
+    res.send("DONE");
 });
 
-let removeAutomaticlyAddedAlarms = () => {
+let removeAutomaticlyAddedAlarms = (cb) => {
     var exist_file_data = jsonfile.readFileSync(alarmsFilePath);
     exist_file_data = exist_file_data.filter((singleAlarm) => {
         if (singleAlarm.alarm_name != "#AUTOMETED#") {
             return singleAlarm;
         }
     });
-    jsonfile.writeFileSync(alarmsFilePath, exist_file_data);
+    jsonfile.writeFile(alarmsFilePath, exist_file_data).then(() => {
+        if (typeof cb == "function") cb("DONE");
+    }).catch((err) => {
+        if (typeof cb == "function") cb("ERR");
+    });
+
 }
 
 
@@ -364,7 +368,6 @@ function isRunning(win, mac, linux) {
         })
     })
 }
-
 
 /********************  HANDEL CONNECTION TO AI ***********************/
 // connectToAIdevice();
